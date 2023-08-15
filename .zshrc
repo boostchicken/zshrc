@@ -8,13 +8,9 @@ export ZSH="$HOME/.oh-my-zsh"
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="robbyrussell"
+ZSH_THEME="agnoster"
 
-# Set list of themes to pick from when loading at random
-# Setting this variable when ZSH_THEME=random will cause zsh to load
-# a theme from this variable instead of looking in $ZSH/themes/
-# If set to an empty array, this variable will have no effect.
-# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
+
 
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
@@ -25,7 +21,7 @@ ZSH_THEME="robbyrussell"
 
 # Uncomment one of the following lines to change the auto-update behavior
 # zstyle ':omz:update' mode disabled  # disable automatic updates
-# zstyle ':omz:update' mode auto      # update automatically without asking
+ zstyle ':omz:update' mode auto      # update automatically without asking
 # zstyle ':omz:update' mode reminder  # just remind me to update when it's time
 
 # Uncomment the following line to change how often to auto-update (in days).
@@ -34,14 +30,11 @@ ZSH_THEME="robbyrussell"
 # Uncomment the following line if pasting URLs and other text is messed up.
 # DISABLE_MAGIC_FUNCTIONS="true"
 
-# Uncomment the following line to disable colors in ls.
-# DISABLE_LS_COLORS="true"
 
-# Uncomment the following line to disable auto-setting terminal title.
-# DISABLE_AUTO_TITLE="true"
+
 
 # Uncomment the following line to enable command auto-correction.
-# ENABLE_CORRECTION="true"
+ ENABLE_CORRECTION="falsdr"
 
 # Uncomment the following line to display red dots whilst waiting for completion.
 # You can also set it to another string to have that shown instead of the default red dots.
@@ -70,7 +63,7 @@ ZSH_THEME="robbyrussell"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git brew macos github)
+plugins=(git brew macos github z)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -99,10 +92,63 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+_z_cd() {
+    cd "$@" || return "$?"
+
+    if [ "$_ZO_ECHO" = "1" ]; then
+        echo "$PWD"
+    fi
+}
+
+z() {
+    if [ "$#" -eq 0 ]; then
+        _z_cd ~
+    elif [ "$#" -eq 1 ] && [ "$1" = '-' ]; then
+        if [ -n "$OLDPWD" ]; then
+            _z_cd "$OLDPWD"
+        else
+            echo 'zoxide: $OLDPWD is not set'
+            return 1
+        fi
+    else
+        _zoxide_result="$(zoxide query -- "$@")" && _z_cd "$_zoxide_result"
+    fi
+}
+
+zi() {
+    _zoxide_result="$(zoxide query -i -- "$@")" && _z_cd "$_zoxide_result"
+}
+
+
+alias za='zoxide add'
+
+alias zq='zoxide query'
+alias zqi='zoxide query -i'
+
+alias zr='zoxide remove'
+zri() {
+    _zoxide_result="$(zoxide query -i -- "$@")" && zoxide remove "$_zoxide_result"
+}
+
+
+_zoxide_hook() {
+    zoxide add "$(pwd -L)"
+}
+
+chpwd_functions=(${chpwd_functions[@]} "_zoxide_hook")
 
 export GPG_TTY=$(tty)
-export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
-gpgconf --launch gpg-agent
+test -e gpgconf && export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+test -e gpgconf &&gpgconf --launch gpg-agent
 
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
+eval `dircolors ~/.dircolors`
+
+ test -e zsh && alias zshconfig="vi ~/.zshrc"
+test -e zsh && alias zshrc="source ~/.zshrc"
+test -e apt && alias aui="sudo apt update && sudo apt install $1"
+test -e zsh &&  alias ai="sudo apt install $1"
+test -e zsh &&  alias auu="sudo apt update && sudo apt upgrade"
+test -e zsh &&  alias as="sudo apt search $1"
+test -e nvm &&  export NVM_DIR="$HOME/nvm"
